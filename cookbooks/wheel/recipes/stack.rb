@@ -9,10 +9,19 @@ include_recipe "git::default"
 include_recipe "mysql::server"
 include_recipe "rabbitmq::default"
 
+# fixes CHEF-1699
+ruby_block "reset group list" do
+    block do
+        Etc.endgrent
+    end                
+    action :nothing
+end
+
 user node[:wheel][:username] do
     comment "Wheel User"
     home "/home/#{node[:wheel][:username]}"
     shell "/bin/bash"
+    notifies :create, "ruby_block[reset group list]", :immediately
 end
 
 directory "/home/#{node[:wheel][:username]}" do
