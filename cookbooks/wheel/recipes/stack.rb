@@ -40,8 +40,8 @@ end
 
 cookbook_file "/home/#{node[:wheel][:username]}/.ssh/config" do
     source "config"
-    owner node[:gitolite][:wheel]
-    group node[:gitolite][:wheel]
+    owner node[:wheel][:username]
+    group node[:wheel][:username]
     action :create_if_missing
 end
 
