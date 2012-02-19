@@ -6,8 +6,8 @@
 #
 
 include_recipe "git::default"
-include_recipe "mysql::server"
-include_recipe "rabbitmq::default"
+include_recipe "wheel::mysqld"
+include_recipe "wheel::rabbitmq"
 
 # fixes CHEF-1699
 ruby_block "reset group list" do
@@ -17,6 +17,9 @@ ruby_block "reset group list" do
     action :nothing
 end
 
+Chef::Log.info("started recipe stack")
+
+Chef::Log.debug("User #{node[:wheel][:username]}")
 user node[:wheel][:username] do
     comment "Wheel User"
     home "/home/#{node[:wheel][:username]}"
@@ -67,15 +70,25 @@ git "/home/#{node[:wheel][:username]}/devstack" do
     user node[:wheel][:username]
 end
 
-cookbook_file "/home/#{node[:wheel][:username]}/devstack/localrc" do
-    source "localrc"
+template "/home/#{node[:wheel][:username]}/devstack/localrc" do
+    source "localrc.erb"
     owner node[:wheel][:username]
     group node[:wheel][:username]
     action :create_if_missing
+    variables(
+        :ENABLED_SERVICES => node[:stack][:enabled_services],
+        :LIBVIRT_TYPE => node[:stack][:libvirt_type],
+        :MYSQL_HOST => node[:stack][:mysql][:host],
+        :MYSQL_USER => node[:stack][:mysql][:user],
+        :MYSQL_PASSWORD => node[:stack][:mysql][:password],
+        :RABBIT_HOST => node[:stack][:rabbit][:host],
+        :RABBIT_PASSWORD => node[:stack][:rabbit][:password],
+        :REPOS => node[:stack][:repos],
+        :BRANCH => node[:stack][:branch]
+    )
 end
 
-execute "./stack.sh" do
-    user node[:wheel][:username]
+execute "sudo ./stack.sh" do
     environment ({"HOME" => "/home/#{node[:wheel][:username]}"})
     cwd "/home/#{node[:wheel][:username]}/devstack"
     not_if {File.exists?("/opt/stack/devstack")}
