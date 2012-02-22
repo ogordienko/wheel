@@ -5,7 +5,7 @@ Vagrant::Config.run do |config|
     config.vm.box = "os-oneiric"
     config.vm.provision :chef_solo do |chef|
         chef.cookbooks_path = "cookbooks"
-        chef.add_recipe "wheel"
+        chef.add_recipe "wheel::stack"
         chef.log_level = :debug
     end 
 end
